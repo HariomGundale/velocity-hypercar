@@ -126,3 +126,7 @@ Expected result for that build (Porsche 911 GT3 RS with Weissach options): final
 ## 3D cars
 The backend decides which cars exist (`/api/cars`); the frontend renders each car's own GLB from `assets/models/<slug>.glb`.
 Only cars listed in `app/db/seed.py` are served. See `frontend/vehicle-assets.md` for how to add a model or car, and `assets/models/README.md`.
+
+## Code Audit & Debugging Report
+A full audit of codebase errors, WebGL memory leaks, state management issues, schema validations, and SQLite foreign key enforcement was completed. See [DEBUGGING_AND_AUDIT.md](file:///P:/p-66/velocity-hypercar/DEBUGGING_AND_AUDIT.md) for full details.
+

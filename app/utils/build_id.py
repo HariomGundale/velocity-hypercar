@@ -2,7 +2,7 @@ import re
 import secrets
 
 BUILD_ID_PREFIX = "VX-"
-BUILD_ID_PATTERN = re.compile(r"^VX-[0-9A-F]{5}$")
+BUILD_ID_PATTERN = re.compile(r"^VX-[0-9A-F]{5}$", re.IGNORECASE)
 
 
 def generate_build_id() -> str:
@@ -11,4 +11,7 @@ def generate_build_id() -> str:
 
 
 def is_valid_build_id(build_id: str) -> bool:
-    return bool(BUILD_ID_PATTERN.match(build_id))
+    if not isinstance(build_id, str):
+        return False
+    return bool(BUILD_ID_PATTERN.match(build_id.strip()))
+

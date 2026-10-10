@@ -8,7 +8,12 @@ const BASE=import.meta.env.BASE_URL;
 
 const REGISTRY=[
  {key:'porsche-911-gt3-rs',alt:'Porsche 911 GT3 RS',art:'gt3rs',slugs:['porsche-911-gt3-rs'],names:['porsche-911-gt3-rs'],model:{credit:''}},
- {key:'suzuki-swift',alt:'Suzuki Swift',slugs:['suzuki-swift'],names:['suzuki-swift'],model:{credit:''}}];
+ {key:'suzuki-swift',alt:'Suzuki Swift',art:'swift',slugs:['suzuki-swift'],names:['suzuki-swift'],model:{credit:''}},
+ {key:'ferrari-296-gtb',alt:'Ferrari 296 GTB',art:'ferrari',slugs:['ferrari-296-gtb'],names:['ferrari-296-gtb'],model:{credit:''}},
+ {key:'glc-300e',alt:'Mercedes-Benz GLC 300e',art:'glc',slugs:['glc-300e'],names:['glc-300e','mercedes-benz-glc-300e'],model:{credit:''}},
+ {key:'lamborghini-huracan-tecnica',alt:'Lamborghini Huracán Tecnica',art:'huracan',slugs:['lamborghini-huracan-tecnica'],names:['lamborghini-huracan-tecnica'],model:{credit:''}},
+ {key:'eqs-580',alt:'Mercedes-Benz EQS 580',art:'eqs',slugs:['eqs-580'],names:['eqs-580','mercedes-benz-eqs-580'],model:{credit:''}},
+ {key:'mazda-3',alt:'Mazda 3',art:'mazda',slugs:['mazda-3'],names:['mazda-3'],model:{credit:''}}];
 
 const find=car=>{const slug=normalizeCarKey(car.slug),name=normalizeCarKey(car.name);
  return REGISTRY.find(r=>slug&&r.slugs.includes(slug))||REGISTRY.find(r=>name&&r.names.includes(name))||null};

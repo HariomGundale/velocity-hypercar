@@ -1,6 +1,11 @@
 EXPECTED_CARS = [
     "Porsche 911 GT3 RS",
     "Suzuki Swift",
+    "Ferrari 296 GTB",
+    "Mercedes-Benz GLC 300e",
+    "Lamborghini Huracán Tecnica",
+    "Mercedes-Benz EQS 580",
+    "Mazda 3",
 ]
 
 
@@ -9,7 +14,7 @@ def test_list_cars(client):
     assert r.status_code == 200
     names = [c["name"] for c in r.json()]
     assert names == EXPECTED_CARS
-    assert len(names) == 2
+    assert len(names) == 7
 
 
 def test_get_car(client):
@@ -23,7 +28,7 @@ def test_get_car(client):
 
 def test_all_cars_retrieval_and_specs(client):
     cars = client.get("/api/cars").json()
-    assert len(cars) == 2
+    assert len(cars) == 7
     for c in cars:
         assert c["name"] in EXPECTED_CARS
         assert c["base_price"] > 0
@@ -58,7 +63,7 @@ def test_inactive_car_hidden(client, session_factory):
         db.commit()
     active_names = [c["name"] for c in client.get("/api/cars").json()]
     assert "Porsche 911 GT3 RS" not in active_names
-    assert len(active_names) == 1
+    assert len(active_names) == 6
     assert client.get("/api/cars/1").status_code == 404
 
 
@@ -67,7 +72,7 @@ def test_options_load(client):
     counts = {k: len(v) for k, v in body.items()}
     assert counts == {
         "paints": 5, "wheels": 4, "calipers": 4, "interior_materials": 3, "interior_colors": 4,
-        "seat_types": 3, "engines": 4, "performance_packages": 4, "aero_packages": 4,
+        "seat_types": 3, "engines": 14, "performance_packages": 14, "aero_packages": 14,
     }
 
 
@@ -92,8 +97,8 @@ def test_inactive_options_excluded(client, session_factory):
 
 def test_individual_option_endpoints(client):
     for path, n in [("paints", 5), ("wheels", 4), ("calipers", 4), ("interior-materials", 3),
-                    ("interior-colors", 4), ("seat-types", 3), ("engines", 4),
-                    ("performance-packages", 4), ("aero-packages", 4)]:
+                    ("interior-colors", 4), ("seat-types", 3), ("engines", 14),
+                    ("performance-packages", 14), ("aero-packages", 14)]:
         r = client.get(f"/api/options/{path}")
         assert r.status_code == 200 and len(r.json()) == n, path
 
@@ -104,7 +109,7 @@ def test_seed_is_idempotent(client, session_factory):
     with session_factory() as db:
         assert seed_database(db) == 0
         assert seed_database(db) == 0
-        assert db.query(Car).count() == 2 and db.query(Engine).count() == 4
+        assert db.query(Car).count() == 7 and db.query(Engine).count() == 14
 
 
 def test_system_endpoints(client):

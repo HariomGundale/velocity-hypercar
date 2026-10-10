@@ -1,5 +1,7 @@
 import React,{useState,useEffect,useRef,useCallback} from 'react';
 import CarVisual,{Wheel} from './CarVisual.jsx';
+import {SeatVisual} from './SeatVisual.jsx';
+import {LandingPage} from './LandingPage.jsx';
 import * as C from './catalog.js';
 import {getCars} from './services/carService.js';
 import {getOptions} from './services/optionService.js';
@@ -40,6 +42,7 @@ function Configurator({car,opts,sel,setSel,lights,setLights,b,look,editing,openS
 const [tab,setTab]=useState('exterior'),[drawer,setDrawer]=useState(false);
 const co=C.optionsForCar(opts,car.id),set=(k,v)=>setSel(s=>({...s,[k]:v}));
 const pk=byId(co.performance_packages,sel.performance_package_id)||{},aero=byId(co.aero_packages,sel.aero_package_id)||{};
+const seatOpt=byId(opts.seat_types,sel.seat_type_id),matOpt=byId(opts.interior_materials,sel.interior_material_id),colOpt=byId(opts.interior_colors,sel.interior_color_id);
 const flat=!(pk.horsepower_modifier||pk.handling_modifier||pk.braking_modifier);
 const content={
 exterior:<><Grp t="Colours"><div className="row">{co.paints.map(p=><Dot key={p.id} on={sel.paint_id===p.id} label={p.name} onClick={()=>set('paint_id',p.id)}><i style={{background:p.hex_code}}/></Dot>)}</div></Grp>
@@ -59,7 +62,7 @@ aero:<><Grp t="Aero package"><Pills items={co.aero_packages} value={sel.aero_pac
 <div className="specs"><Spec v={b.downforce} u="PTS" l="Downforce"/><Spec v={b.drag} u="PTS" l="Drag"/><Spec v={b.topSpeed} u="KM/H" l="Top speed"/><div className="mini"><p>Handling <b>{b.handling}</b></p></div></div></>};
 return <main className="show"><div className="title"><button className="circ" aria-label="Back to models" onClick={()=>go('/models')}>←</button><div><h1>{car.name}</h1><p>{b.horsepower} HP · {b.topSpeed} KM/H · {b.zeroToHundred.toFixed(1)} SEC</p></div></div>
 <div className="total"><span>TOTAL</span><b><Num v={b.price} money/></b><span className={'est'+(b.source==='backend'?' ok':'')}>{b.source==='backend'?'CONFIRMED BY SERVER':'ESTIMATE · SAVE FOR FINAL'}</span><button className="link" onClick={()=>setDrawer(true)}>Your build ›</button></div>
-<div className="bigcar"><CarVisual car={car} look={look} onHot={t=>setTab(t)}/></div>
+<div className="bigcar bigcar-stage"><CarVisual car={car} look={look} onHot={t=>setTab(t)}/><SeatVisual look={look} seat={seatOpt} material={matOpt} color={colOpt} onClick={()=>setTab('interior')}/></div>
 <div className="tray" role="region" aria-label="Configuration"><div className="tabs" role="tablist">{TABS.map(t=><button key={t} role="tab" aria-selected={tab===t} className={tab===t?'on':''} onClick={()=>setTab(t)}>{t}</button>)}
 <button className="link rst" onClick={openReset}>Reset</button></div><div className="tbody" key={tab}>{content[tab]}</div></div>
 {drawer&&<BuildDrawer label={`YOUR BUILD${editing?' · EDITING':''}`} title={car.name} rows={rowsOf(opts,sel,lights)} b={b} onClose={()=>setDrawer(false)} action={<button className="btn dark" onClick={()=>{setDrawer(false);openSave()}}>SAVE BUILD</button>}/>}</main>}
@@ -69,10 +72,11 @@ return <main className="reveal"><div className="bigcar hero"><CarVisual car={car
 <div className="stats3"><span><b>{car.horsepower}</b>HP</span><span><b>{car.top_speed}</b>KM/H</span><span><b>{car.acceleration}</b>SEC</span></div>
 <button className="btn dark" onClick={()=>onConfigure(car.id)}>CONFIGURE YOURS</button></div></main>}
 
-function Models({cars,opts,sel,look,selectCar,go}){const n=cars.length,i=Math.max(0,cars.findIndex(c=>c.id===sel.car_id)),car=cars[i],h=Math.floor(n/2),pick=k=>selectCar(cars[(k+n)%n].id);
+function Models({cars,opts,sel,selectCar,go}){const n=cars.length,i=Math.max(0,cars.findIndex(c=>c.id===sel.car_id)),car=cars[i],h=Math.floor(n/2),pick=k=>selectCar(cars[(k+n)%n].id);
 return <main className="models"><div className="lane">{cars.map((c,k)=>{const o=((k-i+n+h)%n)-h,far=Math.abs(o)>1;
-return <button key={c.id} className={'slot'+(o?'':' mid')} style={{transform:`translateX(${o*58}%) scale(${o?.52:1})`,opacity:far?0:o?.5:1,pointerEvents:far?'none':'auto'}} aria-label={c.name} onClick={()=>o?pick(k):go('/configure')} tabIndex={o&&!far?0:-1}>
-<CarVisual car={c} look={look} compact/></button>})}</div>
+const cSel=c.id===sel.car_id?sel:C.defaultSelection(c.id,opts),cLook=C.makeLook(opts,cSel);
+return <button key={c.id} className={'slot'+(o?'':' mid')} style={{transform:`translateX(${o*58}%) scale(${o?0.52:1})`,opacity:far?0:o?0.5:1,pointerEvents:far?'none':'auto'}} aria-label={c.name} onClick={()=>o?pick(k):go('/configure')} tabIndex={o&&!far?0:-1}>
+<CarVisual car={c} look={cLook} compact/></button>})}</div>
 <div className="mname"><button className="circ" aria-label="Previous model" onClick={()=>pick(i-1)}>‹</button><div><p className="lbl">CHOOSE YOUR MACHINE</p><h1>{car.name}</h1>
 <div className="stats3"><span><b>{car.horsepower}</b>HP</span><span><b>{car.top_speed}</b>KM/H</span><span><b>{car.acceleration}</b>SEC</span></div></div><button className="circ" aria-label="Next model" onClick={()=>pick(i+1)}>›</button></div>
 <div className="mname"><button className="btn dark" onClick={()=>go('/configure')}>CONFIGURE · FROM {short(car.base_price)}</button></div></main>}
@@ -148,7 +152,7 @@ const nav=[['/models','MODELS'],['/configure','CONFIGURATOR'],['/garage','GARAGE
 return <div className="app"><header><a className="logo" href="#/">VELOCITY</a><nav aria-label="Main">{nav.map(([p,l])=><a key={p} href={'#'+p} className={route===p?'on':''}>{l}</a>)}</nav>
 <div className="icons"><button className="circ" aria-label="Toggle appearance" onClick={()=>setDark(!dark)}>◐</button><button className="circ" aria-label="Garage" onClick={()=>go('/garage')}>⌂</button>
 {user?<button className="circ" aria-label={`Logout ${user.username}`} title={`Logout ${user.username}`} onClick={logout}>⏻</button>:<button className="circ" aria-label="Login" onClick={()=>go('/login')}>☺</button>}</div></header>
-{page===''&&<Home cars={cars} opts={opts} onConfigure={configure}/>}{page==='models'&&<Models cars={cars} opts={opts} sel={sel} look={look} selectCar={selectCar} go={go}/>}
+{page===''&&<LandingPage cars={cars} opts={opts} onConfigure={configure} go={go}/>}{page==='models'&&<Models cars={cars} opts={opts} sel={sel} look={look} selectCar={selectCar} go={go}/>}
 {page==='configure'&&<Configurator car={car} opts={opts} sel={sel} setSel={setSel} lights={lights} setLights={setLights} b={b} look={look} editing={!!editId} openSave={openSave} openReset={()=>setModal('reset')} go={go}/>}
 {page==='garage'&&<Garage key={user?.id} user={user} authReady={authReady} cars={cars} opts={opts} go={go} onEdit={bd=>load(bd,'Build loaded')} onDeleted={id=>{if(editId===id){setEditId(null);setServer(null)}}} fail={fail} toast={toast}/>}
 {page==='login'&&<Auth mode="login" onAuth={onAuth} car={feat} look={authLook}/>}{page==='register'&&<Auth mode="register" onAuth={onAuth} car={feat} look={authLook}/>}

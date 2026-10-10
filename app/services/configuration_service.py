@@ -139,22 +139,35 @@ def get_configuration_by_build_id(db: Session, build_id: str) -> Configuration:
 
 # ---------------------------------------------------------------- response builders
 
+def _ref(obj) -> dict:
+    if obj is None:
+        return {"id": 0, "name": "Unknown"}
+    return {"id": obj.id, "name": obj.name}
+
+
+def _color_ref(obj) -> dict:
+    if obj is None:
+        return {"id": 0, "name": "Unknown", "hex_code": "#000000"}
+    return {"id": obj.id, "name": obj.name, "hex_code": obj.hex_code}
+
+
 def _sections(c: Configuration) -> dict:
+    base_price = c.car.base_price if c.car else 0
     return {
         "exterior": {
-            "paint": {"id": c.paint.id, "name": c.paint.name, "hex_code": c.paint.hex_code},
-            "wheels": {"id": c.wheel.id, "name": c.wheel.name},
-            "caliper": {"id": c.caliper.id, "name": c.caliper.name},
+            "paint": _color_ref(c.paint),
+            "wheels": _ref(c.wheel),
+            "caliper": _ref(c.caliper),
         },
         "interior": {
-            "material": {"id": c.interior_material.id, "name": c.interior_material.name},
-            "color": {"id": c.interior_color.id, "name": c.interior_color.name},
-            "seat": {"id": c.seat_type.id, "name": c.seat_type.name},
+            "material": _ref(c.interior_material),
+            "color": _ref(c.interior_color),
+            "seat": _ref(c.seat_type),
         },
         "performance": {
-            "engine": {"id": c.engine.id, "name": c.engine.name},
-            "package": {"id": c.performance_package.id, "name": c.performance_package.name},
-            "aero": {"id": c.aero_package.id, "name": c.aero_package.name},
+            "engine": _ref(c.engine),
+            "package": _ref(c.performance_package),
+            "aero": _ref(c.aero_package),
             "stats": {
                 "horsepower": c.calculated_horsepower,
                 "top_speed": c.calculated_top_speed,
@@ -164,8 +177,8 @@ def _sections(c: Configuration) -> dict:
             },
         },
         "pricing": {
-            "base_price": c.car.base_price,
-            "options_total": c.calculated_price - c.car.base_price,
+            "base_price": base_price,
+            "options_total": c.calculated_price - base_price,
             "final_price": c.calculated_price,
         },
         "created_at": c.created_at,
@@ -178,7 +191,7 @@ def build_configuration_response(c: Configuration) -> dict:
         "id": c.id,
         "build_id": c.build_id,
         "name": c.name,
-        "car": {"id": c.car.id, "name": c.car.name},
+        "car": _ref(c.car),
         **_sections(c),
     }
 

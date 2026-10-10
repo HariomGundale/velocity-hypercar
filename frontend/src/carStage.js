@@ -36,10 +36,12 @@ export function createStage({preserve=false}={}){
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:preserve});
  renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;renderer.outputColorSpace=THREE.SRGBColorSpace;
  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(36,1,.1,200);
- scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),.04).texture;
+ const pmrem=new THREE.PMREMGenerator(renderer),envTex=pmrem.fromScene(new RoomEnvironment(),.04).texture;
+ scene.environment=envTex;pmrem.dispose();
  const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d'),gr=g.createRadialGradient(128,128,10,128,128,128);
  gr.addColorStop(0,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,256,256);
- const shadow=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));
+ const shadowTex=new THREE.CanvasTexture(cv),shadowGeo=new THREE.PlaneGeometry(1,1),shadowMat=new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false});
+ const shadow=new THREE.Mesh(shadowGeo,shadowMat);
  shadow.rotation.x=-Math.PI/2;shadow.position.y=.005;scene.add(shadow);
  const M={body:new THREE.MeshPhysicalMaterial({color:'#111',metalness:.75,roughness:.4,clearcoat:1,clearcoatRoughness:.03}),
   rim:new THREE.MeshStandardMaterial({metalness:1,roughness:.3}),caliper:new THREE.MeshStandardMaterial({metalness:.3,roughness:.4}),
@@ -56,13 +58,16 @@ export function createStage({preserve=false}={}){
   if(s.look)s.setLook(s.look);return p};
  s.home=ctl=>{cam.position.copy(VIEW_DIR).multiplyScalar(s.dist).add(new THREE.Vector3(0,s.ty,0));if(ctl){ctl.target.set(0,s.ty,0);ctl.update()}else cam.lookAt(0,s.ty,0)};
  s.resize=(w,h)=>{renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()};
- s.dispose=()=>{if(s.cur){scene.remove(s.cur.holder);ACTIVE.delete(s.url)}Object.values(M).forEach(m=>m.dispose());renderer.dispose()};
+ s.dispose=()=>{if(s.cur){scene.remove(s.cur.holder);ACTIVE.delete(s.url)}
+  if(envTex)envTex.dispose();shadowGeo.dispose();shadowTex.dispose();shadowMat.dispose();
+  Object.values(M).forEach(m=>m.dispose());renderer.dispose()};
  return s}
 
 // ---- still image of a car (used for thumbnails: home, model picker, garage). One shared stage, requests queued, results cached ----
-let snapStage,queue=Promise.resolve();const SNAPS=new Map();
+let snapStage,queue=Promise.resolve();const SNAPS=new Map(),MAX_SNAPS=50;
 export function snapshot(vehicle,look,w=1000,h=470){
  const key=[vehicle.key,look.body,look.wheelType,look.cal,look.interior,(look.parts||[]).join()].join('|');if(SNAPS.has(key))return SNAPS.get(key);
+ if(SNAPS.size>=MAX_SNAPS)SNAPS.delete(SNAPS.keys().next().value);
  const job=queue.then(async()=>{snapStage=snapStage||createStage({preserve:true});
   for(const m of vehicle.models){try{const gl=await loadModel(m.url);snapStage.show(m,gl);snapStage.setLook(look);snapStage.home();snapStage.resize(w,h);snapStage.renderer.render(snapStage.scene,snapStage.cam);
    return snapStage.renderer.domElement.toDataURL('image/png')}catch(e){/* try next candidate */}}return null});

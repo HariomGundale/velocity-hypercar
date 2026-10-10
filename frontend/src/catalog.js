@@ -13,7 +13,10 @@ export const defaultSelection=(carId,all)=>{const o=optionsForCar(all,carId);ret
 interior_material_id:o.interior_materials[0]?.id,interior_color_id:o.interior_colors[0]?.id,seat_type_id:o.seat_types[0]?.id,
 engine_id:o.engines[0]?.id,performance_package_id:o.performance_packages[0]?.id,aero_package_id:o.aero_packages[0]?.id}};
 
-export const switchCar=(prev,carId,o)=>({...defaultSelection(carId,o),paint_id:prev.paint_id,wheel_id:prev.wheel_id,caliper_id:prev.caliper_id,interior_material_id:prev.interior_material_id,interior_color_id:prev.interior_color_id,seat_type_id:prev.seat_type_id});
+export const switchCar=(prev,carId,o)=>{const def=defaultSelection(carId,o),co=optionsForCar(o,carId),valid=(l,id)=>(l||[]).some(x=>x.id===id)?id:l[0]?.id;
+return{car_id:carId,paint_id:valid(co.paints,prev?.paint_id)||def.paint_id,wheel_id:valid(co.wheels,prev?.wheel_id)||def.wheel_id,caliper_id:valid(co.calipers,prev?.caliper_id)||def.caliper_id,
+interior_material_id:valid(co.interior_materials,prev?.interior_material_id)||def.interior_material_id,interior_color_id:valid(co.interior_colors,prev?.interior_color_id)||def.interior_color_id,
+seat_type_id:valid(co.seat_types,prev?.seat_type_id)||def.seat_type_id,engine_id:def.engine_id,performance_package_id:def.performance_package_id,aero_package_id:def.aero_package_id}};
 export const selectionKey=s=>SEL_KEYS.map(k=>s[k]).join('-');
 export const savePayload=(s,name)=>{const p={};SEL_KEYS.forEach(k=>{p[k]=s[k]});p.name=name;return p};
 export const selectionFromBuild=b=>({car_id:b.car.id,paint_id:b.exterior.paint.id,wheel_id:b.exterior.wheels.id,caliper_id:b.exterior.caliper.id,
@@ -22,7 +25,7 @@ engine_id:b.performance.engine.id,performance_package_id:b.performance.package.i
 
 const STYLES=['aero','carbon','forged','performance'];
 export function wheelStyle(w,list){const n=String(w?.name||'').toLowerCase();const hit=STYLES.find(s=>n.includes(s));if(hit)return hit;
-if(/alloy|forg/.test(n))return'forged';const i=Math.max(0,(list||[]).findIndex(x=>x.id===w?.id));return STYLES[i%STYLES.length]}
+if(/alloy|forg/.test(n))return'forged';const idx=(list||[]).findIndex(x=>x.id===w?.id),i=idx>=0?idx:0;return STYLES[i%STYLES.length]}
 
 export function aeroParts(a){const t=`${a?.name||''} ${a?.description||''}`.toLowerCase(),p=[];
 if(/splitter|lip/.test(t))p.push('splitter');if(/skirt/.test(t))p.push('skirts');if(/wing|spoiler/.test(t))p.push('wing');if(/diffuser/.test(t))p.push('diffuser');return p}

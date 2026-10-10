@@ -1,5 +1,5 @@
-const D={tire:/tire|tyre|rubber/i,glass:/glass|window|windscreen|windshield/i,caliper:/caliper|brake(?![ _-]?light)/i,
-rim:/(^|[^a-z])rim|alloy|spoke|hub_?cap|wheel(?![ _-]?(well|arch))/i,interior:/leather|seat|interior|dashboard|alcantara|upholster|cabin/i,body:/body|car_?paint|paint|exterior|coachwork/i};
+const D={tire:/tire|tyre|rubber/i,glass:/glass|window|windscreen|windshield/i,caliper:/caliper|brake(?![ _-]?light)|break(?![ _-]?light)/i,
+rim:/(^|[^a-z])rim|alloy|spoke|hub_?cap|wheel(?![ _-]?(well|arch))/i,interior:/leather|seat|interior|dashboard|alcantara|upholster|cabin/i,body:/body|car_?paint|paint|exterior|coachwork|ablaze|pearl_ablaze|red_0/i};
 export const PARTS=['body','rim','caliper','glass','interior','badge'];
 export function classify({mesh='',mat='',chain=[]},adapter={}){
 const own=`${mesh} ${mat}`,near=`${own} ${chain.slice(0,2).join(' ')}`;
